@@ -1,5 +1,46 @@
+# Python
+
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg-info/
+.venv/
+venv/
+env/
+
+# IDE / OS
+.vscode/
+.idea/
+
+Thumbs.db
+
+# Logs / Cache
+.cache/
+*.log
+
+# Environment files
 .env
-__pycache__/
-.DS_Store
-.venv
+.env.*
+!.env.example
+
+# Credentials / Keys (do not commit secrets)
+*.pem
+*.key
+*.p12
+*.crt
+*.der
+*.jks
+*.keystore
+*.pfx
+*.cer
+.streamlit/secrets.toml
+
+# Cloud credentials (block common patterns and the known file)
+*credentials*.json
+*service-account*.json
+*google*.json
+*.creds.json
+aws*.csv
 fourth-carport-468820-q0-4d7085bacfb3.json
+./fourth-carport-468820-q0-4d7085bacfb3.json
