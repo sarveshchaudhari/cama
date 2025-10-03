@@ -1,0 +1,214 @@
+[
+  {
+    "logName": "projects/fourth-carport-468820-q0/logs/cloudaudit.googleapis.com%2Factivity",
+    "resource": {
+      "type": "gcs_bucket",
+      "labels": {
+        "location": "us",
+        "project_id": "fourth-carport-468820-q0",
+        "bucket_name": "logstorage-12345"
+      }
+    },
+    "insertId": "1iz8yn8e77e90",
+    "severity": "NOTICE",
+    "timestamp": "2025-09-29T05:06:21.219351Z",
+    "protoPayload": {
+      "@type": "type.googleapis.com/google.cloud.audit.AuditLog",
+      "status": {},
+      "authenticationInfo": {
+        "principalEmail": "chaudharisarvesh10@gmail.com"
+      },
+      "requestMetadata": {
+        "callerIp": "103.132.28.211",
+        "callerSuppliedUserAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:143.0) Gecko/20100101 Firefox/143.0,gzip(gfe),gzip(gfe)",
+        "requestAttributes": {
+          "time": "2025-09-29T05:06:21.227258605Z",
+          "auth": {}
+        },
+        "destinationAttributes": {}
+      },
+      "serviceName": "storage.googleapis.com",
+      "methodName": "storage.buckets.create",
+      "authorizationInfo": [
+        {
+          "resource": "projects/_/buckets/logstorage-12345",
+          "permission": "storage.buckets.create",
+          "granted": true,
+          "resourceAttributes": {}
+        }
+      ],
+      "resourceName": "projects/_/buckets/logstorage-12345",
+      "serviceData": {
+        "@type": "type.googleapis.com/google.iam.v1.logging.AuditData",
+        "policyDelta": {
+          "bindingDeltas": [
+            {
+              "action": "ADD",
+              "role": "roles/storage.legacyBucketOwner",
+              "member": "projectEditor:fourth-carport-468820-q0"
+            },
+            {
+              "action": "ADD",
+              "role": "roles/storage.legacyBucketOwner",
+              "member": "projectOwner:fourth-carport-468820-q0"
+            },
+            {
+              "action": "ADD",
+              "role": "roles/storage.legacyBucketReader",
+              "member": "projectViewer:fourth-carport-468820-q0"
+            },
+            {
+              "action": "ADD",
+              "role": "roles/storage.legacyObjectOwner",
+              "member": "projectEditor:fourth-carport-468820-q0"
+            },
+            {
+              "action": "ADD",
+              "role": "roles/storage.legacyObjectOwner",
+              "member": "projectOwner:fourth-carport-468820-q0"
+            },
+            {
+              "action": "ADD",
+              "role": "roles/storage.legacyObjectReader",
+              "member": "projectViewer:fourth-carport-468820-q0"
+            }
+          ]
+        }
+      },
+      "request": {
+        "defaultObjectAcl": {
+          "bindings": [
+            {
+              "role": "roles/storage.legacyObjectReader",
+              "members": [
+                "projectViewer:fourth-carport-468820-q0"
+              ]
+            },
+            {
+              "role": "roles/storage.legacyObjectOwner",
+              "members": [
+                "projectOwner:fourth-carport-468820-q0",
+                "projectEditor:fourth-carport-468820-q0"
+              ]
+            }
+          ],
+          "@type": "type.googleapis.com/google.iam.v1.Policy"
+        }
+      },
+      "metadata": {
+        "rpo": "DEFAULT"
+      },
+      "resourceLocation": {
+        "currentLocations": [
+          "us"
+        ]
+      }
+    }
+  },
+  {
+    "logName": "projects/fourth-carport-468820-q0/logs/cloudaudit.googleapis.com%2Factivity",
+    "resource": {
+      "type": "gcs_bucket",
+      "labels": {
+        "location": "us",
+        "bucket_name": "testbucket-12345083r792q45283492",
+        "project_id": "fourth-carport-468820-q0"
+      }
+    },
+    "insertId": "7ycgedeme8",
+    "severity": "NOTICE",
+    "timestamp": "2025-09-29T16:52:36.978559Z",
+    "protoPayload": {
+      "@type": "type.googleapis.com/google.cloud.audit.AuditLog",
+      "status": {},
+      "authenticationInfo": {
+        "principalEmail": "chaudharisarvesh10@gmail.com"
+      },
+      "requestMetadata": {
+        "callerIp": "103.132.28.211",
+        "callerSuppliedUserAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:143.0) Gecko/20100101 Firefox/143.0,gzip(gfe),gzip(gfe)",
+        "requestAttributes": {
+          "time": "2025-09-29T16:52:36.985233750Z",
+          "auth": {}
+        },
+        "destinationAttributes": {}
+      },
+      "serviceName": "storage.googleapis.com",
+      "methodName": "storage.buckets.create",
+      "authorizationInfo": [
+        {
+          "resource": "projects/_/buckets/testbucket-12345083r792q45283492",
+          "permission": "storage.buckets.create",
+          "granted": true,
+          "resourceAttributes": {}
+        }
+      ],
+      "resourceName": "projects/_/buckets/testbucket-12345083r792q45283492",
+      "serviceData": {
+        "@type": "type.googleapis.com/google.iam.v1.logging.AuditData",
+        "policyDelta": {
+          "bindingDeltas": [
+            {
+              "action": "ADD",
+              "role": "roles/storage.legacyBucketOwner",
+              "member": "projectEditor:fourth-carport-468820-q0"
+            },
+            {
+              "action": "ADD",
+              "role": "roles/storage.legacyBucketOwner",
+              "member": "projectOwner:fourth-carport-468820-q0"
+            },
+            {
+              "action": "ADD",
+              "role": "roles/storage.legacyBucketReader",
+              "member": "projectViewer:fourth-carport-468820-q0"
+            },
+            {
+              "action": "ADD",
+              "role": "roles/storage.legacyObjectOwner",
+              "member": "projectEditor:fourth-carport-468820-q0"
+            },
+            {
+              "action": "ADD",
+              "role": "roles/storage.legacyObjectOwner",
+              "member": "projectOwner:fourth-carport-468820-q0"
+            },
+            {
+              "action": "ADD",
+              "role": "roles/storage.legacyObjectReader",
+              "member": "projectViewer:fourth-carport-468820-q0"
+            }
+          ]
+        }
+      },
+      "request": {
+        "defaultObjectAcl": {
+          "bindings": [
+            {
+              "role": "roles/storage.legacyObjectReader",
+              "members": [
+                "projectViewer:fourth-carport-468820-q0"
+              ]
+            },
+            {
+              "role": "roles/storage.legacyObjectOwner",
+              "members": [
+                "projectOwner:fourth-carport-468820-q0",
+                "projectEditor:fourth-carport-468820-q0"
+              ]
+            }
+          ],
+          "@type": "type.googleapis.com/google.iam.v1.Policy"
+        }
+      },
+      "metadata": {
+        "rpo": "DEFAULT"
+      },
+      "resourceLocation": {
+        "currentLocations": [
+          "us"
+        ]
+      }
+    }
+  }
+]

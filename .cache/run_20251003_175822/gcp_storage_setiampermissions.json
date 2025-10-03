@@ -1,0 +1,60 @@
+[
+  {
+    "logName": "projects/fourth-carport-468820-q0/logs/cloudaudit.googleapis.com%2Factivity",
+    "resource": {
+      "type": "gcs_bucket",
+      "labels": {
+        "location": "us",
+        "bucket_name": "logstorage-12345",
+        "project_id": "fourth-carport-468820-q0"
+      }
+    },
+    "insertId": "18yt8iae9rbqj",
+    "severity": "NOTICE",
+    "timestamp": "2025-09-29T05:11:09.806771Z",
+    "protoPayload": {
+      "@type": "type.googleapis.com/google.cloud.audit.AuditLog",
+      "status": {},
+      "authenticationInfo": {
+        "principalEmail": "chaudharisarvesh10@gmail.com"
+      },
+      "requestMetadata": {
+        "callerIp": "103.132.28.211",
+        "callerSuppliedUserAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:143.0) Gecko/20100101 Firefox/143.0,gzip(gfe),gzip(gfe)",
+        "requestAttributes": {
+          "time": "2025-09-29T05:11:09.813555609Z",
+          "auth": {}
+        },
+        "destinationAttributes": {}
+      },
+      "serviceName": "storage.googleapis.com",
+      "methodName": "storage.setIamPermissions",
+      "authorizationInfo": [
+        {
+          "resource": "projects/_/buckets/logstorage-12345",
+          "permission": "storage.buckets.setIamPolicy",
+          "granted": true,
+          "resourceAttributes": {}
+        }
+      ],
+      "resourceName": "projects/_/buckets/logstorage-12345",
+      "serviceData": {
+        "@type": "type.googleapis.com/google.iam.v1.logging.AuditData",
+        "policyDelta": {
+          "bindingDeltas": [
+            {
+              "action": "ADD",
+              "role": "roles/storage.legacyBucketOwner",
+              "member": "serviceAccount:service-1022010503285@gcp-sa-logging.iam.gserviceaccount.com"
+            }
+          ]
+        }
+      },
+      "resourceLocation": {
+        "currentLocations": [
+          "us"
+        ]
+      }
+    }
+  }
+]

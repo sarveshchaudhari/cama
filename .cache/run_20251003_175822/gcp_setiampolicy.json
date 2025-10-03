@@ -1,0 +1,284 @@
+[
+  {
+    "logName": "projects/fourth-carport-468820-q0/logs/cloudaudit.googleapis.com%2Factivity",
+    "resource": {
+      "type": "project",
+      "labels": {
+        "project_id": "fourth-carport-468820-q0"
+      }
+    },
+    "insertId": "-x0euiteoxgxi",
+    "severity": "ERROR",
+    "timestamp": "2025-09-29T05:11:03.536844Z",
+    "protoPayload": {
+      "@type": "type.googleapis.com/google.cloud.audit.AuditLog",
+      "status": {
+        "code": 3,
+        "message": "Exception calling IAM: Service account 281487435234756 does not exist."
+      },
+      "authenticationInfo": {
+        "principalEmail": "service-agent-manager@system.gserviceaccount.com"
+      },
+      "requestMetadata": {
+        "callerIp": "private",
+        "requestAttributes": {},
+        "destinationAttributes": {}
+      },
+      "serviceName": "cloudresourcemanager.googleapis.com",
+      "methodName": "SetIamPolicy",
+      "authorizationInfo": [
+        {
+          "resource": "projects/fourth-carport-468820-q0",
+          "permission": "resourcemanager.projects.setIamPolicy",
+          "granted": true,
+          "resourceAttributes": {
+            "service": "cloudresourcemanager.googleapis.com",
+            "name": "projects/fourth-carport-468820-q0",
+            "type": "cloudresourcemanager.googleapis.com/Project"
+          },
+          "permissionType": "ADMIN_WRITE"
+        }
+      ],
+      "resourceName": "projects/fourth-carport-468820-q0",
+      "request": {
+        "resource": "1022010503285",
+        "@type": "type.googleapis.com/google.iam.v1.SetIamPolicyRequest",
+        "policy": {
+          "etag": "BwY8MPodCoQ=",
+          "bindings": [
+            {
+              "role": "roles/compute.serviceAgent",
+              "members": [
+                "serviceAccount:service-1022010503285@compute-system.iam.gserviceaccount.com"
+              ]
+            },
+            {
+              "role": "roles/editor",
+              "members": [
+                "serviceAccount:1022010503285@cloudservices.gserviceaccount.com",
+                "serviceAccount:1022010503285-compute@developer.gserviceaccount.com"
+              ]
+            },
+            {
+              "role": "roles/owner",
+              "members": [
+                "user:chaudharisarvesh10@gmail.com"
+              ]
+            },
+            {
+              "role": "roles/logging.serviceAgent",
+              "members": [
+                "serviceAccountId:101645305652662936568"
+              ]
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "logName": "projects/fourth-carport-468820-q0/logs/cloudaudit.googleapis.com%2Factivity",
+    "resource": {
+      "type": "project",
+      "labels": {
+        "project_id": "fourth-carport-468820-q0"
+      }
+    },
+    "insertId": "dc6hs9e10v6g",
+    "severity": "ERROR",
+    "timestamp": "2025-09-29T05:11:04.645945Z",
+    "protoPayload": {
+      "@type": "type.googleapis.com/google.cloud.audit.AuditLog",
+      "status": {
+        "code": 3,
+        "message": "Exception calling IAM: Service account 281487435234756 does not exist."
+      },
+      "authenticationInfo": {
+        "principalEmail": "service-agent-manager@system.gserviceaccount.com"
+      },
+      "requestMetadata": {
+        "callerIp": "private",
+        "requestAttributes": {},
+        "destinationAttributes": {}
+      },
+      "serviceName": "cloudresourcemanager.googleapis.com",
+      "methodName": "SetIamPolicy",
+      "authorizationInfo": [
+        {
+          "resource": "projects/fourth-carport-468820-q0",
+          "permission": "resourcemanager.projects.setIamPolicy",
+          "granted": true,
+          "resourceAttributes": {
+            "service": "cloudresourcemanager.googleapis.com",
+            "name": "projects/fourth-carport-468820-q0",
+            "type": "cloudresourcemanager.googleapis.com/Project"
+          },
+          "permissionType": "ADMIN_WRITE"
+        }
+      ],
+      "resourceName": "projects/fourth-carport-468820-q0",
+      "request": {
+        "resource": "1022010503285",
+        "@type": "type.googleapis.com/google.iam.v1.SetIamPolicyRequest",
+        "policy": {
+          "etag": "BwY8MPodCoQ=",
+          "bindings": [
+            {
+              "role": "roles/compute.serviceAgent",
+              "members": [
+                "serviceAccount:service-1022010503285@compute-system.iam.gserviceaccount.com"
+              ]
+            },
+            {
+              "role": "roles/editor",
+              "members": [
+                "serviceAccount:1022010503285@cloudservices.gserviceaccount.com",
+                "serviceAccount:1022010503285-compute@developer.gserviceaccount.com"
+              ]
+            },
+            {
+              "role": "roles/owner",
+              "members": [
+                "user:chaudharisarvesh10@gmail.com"
+              ]
+            },
+            {
+              "role": "roles/logging.serviceAgent",
+              "members": [
+                "serviceAccountId:101645305652662936568"
+              ]
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "logName": "projects/fourth-carport-468820-q0/logs/cloudaudit.googleapis.com%2Factivity",
+    "resource": {
+      "type": "project",
+      "labels": {
+        "project_id": "fourth-carport-468820-q0"
+      }
+    },
+    "insertId": "8c86cae2evxs",
+    "severity": "NOTICE",
+    "timestamp": "2025-09-29T05:11:06.140998Z",
+    "protoPayload": {
+      "@type": "type.googleapis.com/google.cloud.audit.AuditLog",
+      "status": {},
+      "authenticationInfo": {
+        "principalEmail": "service-agent-manager@system.gserviceaccount.com"
+      },
+      "requestMetadata": {
+        "callerIp": "private",
+        "requestAttributes": {},
+        "destinationAttributes": {}
+      },
+      "serviceName": "cloudresourcemanager.googleapis.com",
+      "methodName": "SetIamPolicy",
+      "authorizationInfo": [
+        {
+          "resource": "projects/fourth-carport-468820-q0",
+          "permission": "resourcemanager.projects.setIamPolicy",
+          "granted": true,
+          "resourceAttributes": {
+            "service": "cloudresourcemanager.googleapis.com",
+            "name": "projects/fourth-carport-468820-q0",
+            "type": "cloudresourcemanager.googleapis.com/Project"
+          },
+          "permissionType": "ADMIN_WRITE"
+        },
+        {
+          "resource": "projects/fourth-carport-468820-q0",
+          "permission": "resourcemanager.projects.setIamPolicy",
+          "granted": true,
+          "resourceAttributes": {
+            "service": "cloudresourcemanager.googleapis.com",
+            "name": "projects/fourth-carport-468820-q0",
+            "type": "cloudresourcemanager.googleapis.com/Project"
+          },
+          "permissionType": "ADMIN_WRITE"
+        }
+      ],
+      "resourceName": "projects/fourth-carport-468820-q0",
+      "serviceData": {
+        "@type": "type.googleapis.com/google.iam.v1.logging.AuditData",
+        "policyDelta": {
+          "bindingDeltas": [
+            {
+              "action": "ADD",
+              "role": "roles/logging.serviceAgent",
+              "member": "serviceAccount:service-1022010503285@gcp-sa-logging.iam.gserviceaccount.com"
+            }
+          ]
+        }
+      },
+      "request": {
+        "resource": "1022010503285",
+        "policy": {
+          "etag": "BwY8MPodCoQ=",
+          "bindings": [
+            {
+              "role": "roles/compute.serviceAgent",
+              "members": [
+                "serviceAccount:service-1022010503285@compute-system.iam.gserviceaccount.com"
+              ]
+            },
+            {
+              "role": "roles/editor",
+              "members": [
+                "serviceAccount:1022010503285@cloudservices.gserviceaccount.com",
+                "serviceAccount:1022010503285-compute@developer.gserviceaccount.com"
+              ]
+            },
+            {
+              "role": "roles/owner",
+              "members": [
+                "user:chaudharisarvesh10@gmail.com"
+              ]
+            },
+            {
+              "role": "roles/logging.serviceAgent",
+              "members": [
+                "serviceAccountId:101645305652662936568"
+              ]
+            }
+          ]
+        },
+        "@type": "type.googleapis.com/google.iam.v1.SetIamPolicyRequest"
+      },
+      "response": {
+        "etag": "BwY/6ammk3k=",
+        "bindings": [
+          {
+            "role": "roles/compute.serviceAgent",
+            "members": [
+              "serviceAccount:service-1022010503285@compute-system.iam.gserviceaccount.com"
+            ]
+          },
+          {
+            "role": "roles/editor",
+            "members": [
+              "serviceAccount:1022010503285-compute@developer.gserviceaccount.com",
+              "serviceAccount:1022010503285@cloudservices.gserviceaccount.com"
+            ]
+          },
+          {
+            "role": "roles/logging.serviceAgent",
+            "members": [
+              "serviceAccount:service-1022010503285@gcp-sa-logging.iam.gserviceaccount.com"
+            ]
+          },
+          {
+            "role": "roles/owner",
+            "members": [
+              "user:chaudharisarvesh10@gmail.com"
+            ]
+          }
+        ],
+        "@type": "type.googleapis.com/google.iam.v1.Policy"
+      }
+    }
+  }
+]

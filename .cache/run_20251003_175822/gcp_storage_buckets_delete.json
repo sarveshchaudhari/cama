@@ -1,0 +1,146 @@
+[
+  {
+    "logName": "projects/fourth-carport-468820-q0/logs/cloudaudit.googleapis.com%2Factivity",
+    "resource": {
+      "type": "gcs_bucket",
+      "labels": {
+        "location": "us",
+        "project_id": "fourth-carport-468820-q0",
+        "bucket_name": "logstorage-12345"
+      }
+    },
+    "insertId": "sv0mzneppswy",
+    "severity": "ERROR",
+    "timestamp": "2025-10-01T06:18:00.850817Z",
+    "protoPayload": {
+      "@type": "type.googleapis.com/google.cloud.audit.AuditLog",
+      "status": {
+        "code": 9,
+        "message": "The bucket you tried to delete is not empty."
+      },
+      "authenticationInfo": {
+        "principalEmail": "chaudharisarvesh10@gmail.com"
+      },
+      "requestMetadata": {
+        "callerIp": "103.132.28.211",
+        "callerSuppliedUserAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:143.0) Gecko/20100101 Firefox/143.0,gzip(gfe),gzip(gfe)",
+        "requestAttributes": {
+          "time": "2025-10-01T06:18:00.857183362Z",
+          "reason": "8uSywAYQGg5Db2xpc2V1bSBGbG93cw",
+          "auth": {}
+        },
+        "destinationAttributes": {}
+      },
+      "serviceName": "storage.googleapis.com",
+      "methodName": "storage.buckets.delete",
+      "authorizationInfo": [
+        {
+          "resource": "projects/_/buckets/logstorage-12345",
+          "permission": "storage.buckets.delete",
+          "granted": true,
+          "resourceAttributes": {}
+        }
+      ],
+      "resourceName": "projects/_/buckets/logstorage-12345",
+      "resourceLocation": {
+        "currentLocations": [
+          "us"
+        ]
+      }
+    }
+  },
+  {
+    "logName": "projects/fourth-carport-468820-q0/logs/cloudaudit.googleapis.com%2Factivity",
+    "resource": {
+      "type": "gcs_bucket",
+      "labels": {
+        "location": "us",
+        "project_id": "fourth-carport-468820-q0",
+        "bucket_name": "testbucket-12345083r792q45283492"
+      }
+    },
+    "insertId": "jpr23oeeyn5y",
+    "severity": "NOTICE",
+    "timestamp": "2025-10-01T06:18:00.854829Z",
+    "protoPayload": {
+      "@type": "type.googleapis.com/google.cloud.audit.AuditLog",
+      "status": {},
+      "authenticationInfo": {
+        "principalEmail": "chaudharisarvesh10@gmail.com"
+      },
+      "requestMetadata": {
+        "callerIp": "103.132.28.211",
+        "callerSuppliedUserAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:143.0) Gecko/20100101 Firefox/143.0,gzip(gfe),gzip(gfe)",
+        "requestAttributes": {
+          "time": "2025-10-01T06:18:00.860431549Z",
+          "reason": "8uSywAYQGg5Db2xpc2V1bSBGbG93cw",
+          "auth": {}
+        },
+        "destinationAttributes": {}
+      },
+      "serviceName": "storage.googleapis.com",
+      "methodName": "storage.buckets.delete",
+      "authorizationInfo": [
+        {
+          "resource": "projects/_/buckets/testbucket-12345083r792q45283492",
+          "permission": "storage.buckets.delete",
+          "granted": true,
+          "resourceAttributes": {}
+        }
+      ],
+      "resourceName": "projects/_/buckets/testbucket-12345083r792q45283492",
+      "resourceLocation": {
+        "currentLocations": [
+          "us"
+        ]
+      }
+    }
+  },
+  {
+    "logName": "projects/fourth-carport-468820-q0/logs/cloudaudit.googleapis.com%2Factivity",
+    "resource": {
+      "type": "gcs_bucket",
+      "labels": {
+        "location": "us",
+        "project_id": "fourth-carport-468820-q0",
+        "bucket_name": "logstorage-12345"
+      }
+    },
+    "insertId": "1j9fb3get5h3n",
+    "severity": "NOTICE",
+    "timestamp": "2025-10-01T06:18:05.605179Z",
+    "protoPayload": {
+      "@type": "type.googleapis.com/google.cloud.audit.AuditLog",
+      "status": {},
+      "authenticationInfo": {
+        "principalEmail": "chaudharisarvesh10@gmail.com"
+      },
+      "requestMetadata": {
+        "callerIp": "103.132.28.211",
+        "callerSuppliedUserAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:143.0) Gecko/20100101 Firefox/143.0,gzip(gfe),gzip(gfe)",
+        "requestAttributes": {
+          "time": "2025-10-01T06:18:05.611518123Z",
+          "reason": "8uSywAYQGg5Db2xpc2V1bSBGbG93cw",
+          "auth": {}
+        },
+        "destinationAttributes": {}
+      },
+      "serviceName": "storage.googleapis.com",
+      "methodName": "storage.buckets.delete",
+      "authorizationInfo": [
+        {
+          "resource": "projects/_/buckets/logstorage-12345",
+          "permission": "storage.buckets.delete",
+          "granted": true,
+          "resourceAttributes": {}
+        }
+      ],
+      "resourceName": "projects/_/buckets/logstorage-12345",
+      "resourceLocation": {
+        "currentLocations": [
+          "us"
+        ]
+      }
+    }
+  }
+]

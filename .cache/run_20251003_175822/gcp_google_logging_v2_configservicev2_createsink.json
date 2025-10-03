@@ -1,0 +1,57 @@
+[
+  {
+    "logName": "projects/fourth-carport-468820-q0/logs/cloudaudit.googleapis.com%2Factivity",
+    "resource": {
+      "type": "logging_sink",
+      "labels": {
+        "project_id": "fourth-carport-468820-q0",
+        "destination": "",
+        "name": "btech"
+      }
+    },
+    "insertId": "lnyjdid53qd",
+    "severity": "NOTICE",
+    "timestamp": "2025-09-29T05:11:00.550820Z",
+    "protoPayload": {
+      "@type": "type.googleapis.com/google.cloud.audit.AuditLog",
+      "status": {},
+      "authenticationInfo": {
+        "principalEmail": "chaudharisarvesh10@gmail.com"
+      },
+      "requestMetadata": {
+        "callerIp": "103.132.28.211",
+        "callerSuppliedUserAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:143.0) Gecko/20100101 Firefox/143.0,gzip(gfe),gzip(gfe)",
+        "requestAttributes": {
+          "time": "2025-09-29T05:11:00.562755934Z",
+          "auth": {}
+        },
+        "destinationAttributes": {}
+      },
+      "serviceName": "logging.googleapis.com",
+      "methodName": "google.logging.v2.ConfigServiceV2.CreateSink",
+      "authorizationInfo": [
+        {
+          "resource": "projects/fourth-carport-468820-q0/sinks/btech",
+          "permission": "logging.sinks.create",
+          "granted": true,
+          "resourceAttributes": {
+            "service": "logging.googleapis.com",
+            "name": "projects/fourth-carport-468820-q0/sinks/btech",
+            "type": "logging.googleapis.com/LogSink"
+          },
+          "permissionType": "ADMIN_WRITE"
+        }
+      ],
+      "resourceName": "projects/fourth-carport-468820-q0/sinks/btech",
+      "request": {
+        "parent": "projects/fourth-carport-468820-q0",
+        "sink": {
+          "destination": "storage.googleapis.com/logstorage-12345",
+          "name": "btech"
+        },
+        "uniqueWriterIdentity": true,
+        "@type": "type.googleapis.com/google.logging.v2.CreateSinkRequest"
+      }
+    }
+  }
+]
