@@ -5,7 +5,15 @@ description = "cama using crewAI"
 authors = [{ name = "Your Name", email = "you@example.com" }]
 requires-python = ">=3.10,<3.14"
 dependencies = [
-    "crewai[tools]>=0.201.1,<1.0.0"
+    "boto3>=1.40.44",
+    "botocore>=1.40.44",
+    "crewai[tools]>=0.201.1,<1.0.0",
+    "google-auth>=2.41.1",
+    "google-cloud-logging>=3.12.1",
+    "langchain-google-genai>=2.1.12",
+    "python-dotenv>=1.1.1",
+    "streamlit>=1.50.0",
+    "reportlab>=4.2.0",
 ]
 
 [project.scripts]
