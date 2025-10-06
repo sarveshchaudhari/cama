@@ -108,8 +108,10 @@ def _normalize_gcp(entry: Dict[str, Any], source_file: str) -> Dict[str, Any]:
 
 
 def _normalize_aws(event: Dict[str, Any], source_file: str) -> Dict[str, Any]:
-    action = event.get("EventName") or "unknown"
-    when = _parse_dt(event.get("EventTime"))
+    # Support both lookup_events style (EventName, EventTime, CloudTrailEvent)
+    # and raw CloudTrail Records files (eventName, eventTime, eventSource, etc.)
+    action = event.get("EventName") or event.get("eventName") or "unknown"
+    when = _parse_dt(event.get("EventTime") or event.get("eventTime"))
     user = event.get("Username")
 
     cte_raw = event.get("CloudTrailEvent")
@@ -120,26 +122,27 @@ def _normalize_aws(event: Dict[str, Any], source_file: str) -> Dict[str, Any]:
         except Exception:
             cte = {}
 
-    event_source = cte.get("eventSource") or event.get("EventSource")
-    ip_addr = cte.get("sourceIPAddress") or event.get("SourceIpAddress")
-    region = cte.get("awsRegion") or event.get("AwsRegion")
+    # Prefer structured fields inside CloudTrailEvent when available, fallback to top-level keys
+    event_source = cte.get("eventSource") or event.get("EventSource") or event.get("eventSource")
+    ip_addr = cte.get("sourceIPAddress") or event.get("SourceIpAddress") or event.get("sourceIPAddress")
+    region = cte.get("awsRegion") or event.get("AwsRegion") or event.get("awsRegion")
 
     res_name = None
-    resources = event.get("Resources")
+    resources = event.get("Resources") or event.get("resources")
     if isinstance(resources, list) and resources:
-        names = [r.get("ResourceName") for r in resources if isinstance(r, dict)]
+        names = [r.get("ResourceName") or r.get("resourceName") for r in resources if isinstance(r, dict)]
         names = [n for n in names if n]
         if names:
             res_name = ", ".join(sorted(set(names)))
     if not res_name:
-        rp = cte.get("requestParameters") or {}
+        rp = cte.get("requestParameters") or event.get("requestParameters") or {}
         for key in ("bucketName", "groupName", "instanceId", "streamName", "dbInstanceIdentifier"):
             if key in rp and rp.get(key):
                 res_name = rp.get(key)
                 break
 
     if not user:
-        ui = cte.get("userIdentity") or {}
+        ui = cte.get("userIdentity") or event.get("userIdentity") or {}
         user = ui.get("userName") or ui.get("arn") or ui.get("principalId")
 
     return {

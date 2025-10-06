@@ -61,47 +61,64 @@ if st.sidebar.button("Clear Cache"):
 
 provider = st.sidebar.selectbox("Cloud Provider", ["GCP", "AWS"])
 
-# Timeframe selection (Days vs Custom Range)
-timeframe_mode = st.sidebar.radio("Timeframe Mode", ["Days", "Custom Range"], index=0)
-if timeframe_mode == "Days":
-    days = st.sidebar.slider("Days to fetch", min_value=1, max_value=30, value=1)
-    # Derive start/end for display
-    now = datetime.now(timezone.utc)
-    start_dt = now - timedelta(days=days)
-    end_dt = now
-else:
-    now = datetime.now(timezone.utc)
-    min_dt = now - timedelta(days=30)
-    default_start = now - timedelta(days=1)
-    start_dt, end_dt = st.sidebar.slider(
-        "Select time range",
-        min_value=min_dt,
-        max_value=now,
-        value=(default_start, now),
-        format="YYYY-MM-DD HH:mm",
-    )
-    # Compute days window for handlers/tools (rounded up, min 1)
-    delta_days = max(1, math.ceil((end_dt - start_dt).total_seconds() / 86400))
-    days = int(delta_days)
-
 # API Key config
 st.sidebar.markdown("---")
+
 gemini_key = st.sidebar.text_input(
     "GOOGLE_API_KEY (Gemini)", value=os.getenv("GOOGLE_API_KEY", ""), type="password"
 )
 
 st.sidebar.markdown("---")
 
+# Provider-specific configuration comes BEFORE timeframe so we can adapt UI
+aws_source_mode = "API"
+aws_dir_input: Optional[str] = None
 if provider == "GCP":
     st.subheader("GCP Credentials")
     st.write("Paste your Service Account JSON. It will be used only in-memory for this session.")
     gcp_json_default = os.getenv("GOOGLE_APPLICATION_CREDENTIALS_JSON", "")
     gcp_json = st.text_area("Service Account JSON", value=gcp_json_default, height=200)
 else:
-    st.subheader("AWS Credentials")
-    aws_key = st.text_input("AWS_ACCESS_KEY_ID", value=os.getenv("AWS_ACCESS_KEY_ID", ""))
-    aws_secret = st.text_input("AWS_SECRET_ACCESS_KEY", value=os.getenv("AWS_SECRET_ACCESS_KEY", ""), type="password")
-    aws_region = st.text_input("AWS_DEFAULT_REGION", value=os.getenv("AWS_DEFAULT_REGION", "us-east-1"))
+    st.subheader("AWS Source")
+    aws_source_mode = st.radio("How do you want to ingest AWS CloudTrail logs?", ["Local Directory", "API"], index=0)
+    if aws_source_mode == "Local Directory":
+        default_dir = str((PROJECT_ROOT / "Resources" / "CloudTrail").resolve())
+        aws_dir_input = st.text_input("CloudTrail directory path", value=os.getenv("AWS_CLOUDTRAIL_DIR", default_dir))
+        st.caption("Provide a folder containing CloudTrail .json files (non-recursive). No AWS credentials needed.")
+    else:
+        st.subheader("AWS Credentials")
+        aws_key = st.text_input("AWS_ACCESS_KEY_ID", value=os.getenv("AWS_ACCESS_KEY_ID", ""))
+        aws_secret = st.text_input("AWS_SECRET_ACCESS_KEY", value=os.getenv("AWS_SECRET_ACCESS_KEY", ""), type="password")
+        aws_region = st.text_input("AWS_DEFAULT_REGION", value=os.getenv("AWS_DEFAULT_REGION", "us-east-1"))
+
+# Timeframe selection (hide when AWS Local Directory)
+show_timeframe = not (provider == "AWS" and aws_source_mode == "Local Directory")
+if show_timeframe:
+    timeframe_mode = st.sidebar.radio("Timeframe Mode", ["Days", "Custom Range"], index=0)
+    if timeframe_mode == "Days":
+        days = st.sidebar.slider("Days to fetch", min_value=1, max_value=30, value=1)
+        now = datetime.now(timezone.utc)
+        start_dt = now - timedelta(days=days)
+        end_dt = now
+    else:
+        now = datetime.now(timezone.utc)
+        min_dt = now - timedelta(days=30)
+        default_start = now - timedelta(days=1)
+        start_dt, end_dt = st.sidebar.slider(
+            "Select time range",
+            min_value=min_dt,
+            max_value=now,
+            value=(default_start, now),
+            format="YYYY-MM-DD HH:mm",
+        )
+        delta_days = max(1, math.ceil((end_dt - start_dt).total_seconds() / 86400))
+        days = int(delta_days)
+else:
+    # Local directory mode ignores timeframe entirely
+    now = datetime.now(timezone.utc)
+    start_dt = now - timedelta(days=1)
+    end_dt = now
+    days = 1
 
 # Helper to run the crew and return the run_dir
 
@@ -118,12 +135,26 @@ def _run_ingestion_then_analysis(provider: str, days: int, start_dt: datetime, e
             return None
         os.environ["GOOGLE_APPLICATION_CREDENTIALS_JSON"] = gcp_json
     else:
-        if not (aws_key and aws_secret and aws_region):
-            st.error("Please provide AWS key, secret, and region.")
-            return None
-        os.environ["AWS_ACCESS_KEY_ID"] = aws_key
-        os.environ["AWS_SECRET_ACCESS_KEY"] = aws_secret
-        os.environ["AWS_DEFAULT_REGION"] = aws_region
+        if aws_source_mode == "Local Directory":
+            if not aws_dir_input:
+                st.error("Please provide the CloudTrail directory path.")
+                return None
+            p = Path(aws_dir_input).expanduser()
+            if not p.exists() or not p.is_dir():
+                st.error("CloudTrail directory not found or not a directory.")
+                return None
+            os.environ["AWS_CLOUDTRAIL_DIR"] = str(p.resolve())
+            # Ensure we don't accidentally force API mode due to leftover envs
+            os.environ.pop("AWS_ACCESS_KEY_ID", None)
+            os.environ.pop("AWS_SECRET_ACCESS_KEY", None)
+        else:
+            if not (aws_key and aws_secret and aws_region):
+                st.error("Please provide AWS key, secret, and region.")
+                return None
+            os.environ["AWS_ACCESS_KEY_ID"] = aws_key
+            os.environ["AWS_SECRET_ACCESS_KEY"] = aws_secret
+            os.environ["AWS_DEFAULT_REGION"] = aws_region
+            os.environ.pop("AWS_CLOUDTRAIL_DIR", None)
 
     try:
         crew = CamaCrew().build(
