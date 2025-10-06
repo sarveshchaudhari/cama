@@ -7,12 +7,13 @@ from typing import List, Optional
 from datetime import datetime, timedelta, timezone
 import math
 import re
+import shutil
 
 import streamlit as st
 from dotenv import load_dotenv
 
 # Ensure the project's src is on sys.path so we can import our package
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
 SRC_DIR = PROJECT_ROOT / "src"
 if str(SRC_DIR) not in sys.path:
     sys.path.insert(0, str(SRC_DIR))
@@ -21,18 +22,43 @@ if str(SRC_DIR) not in sys.path:
 load_dotenv(dotenv_path=PROJECT_ROOT / ".env", override=False)
 
 # Lazy imports of our modules (after sys.path adjustment)
-from cama.lib.gcp_handler import fetch_and_format_gcp_logs  # noqa: F401  # still referenced in docs/notes
-from cama.lib.aws_handler import fetch_and_format_aws_logs  # noqa: F401  # still referenced in docs/notes
+from cama.lib.gcp_handler import fetch_and_format_gcp_logs  # noqa: F401  # referenced in notes
+from cama.lib.aws_handler import fetch_and_format_aws_logs  # noqa: F401  # referenced in notes
 from cama.agents.ingestion_agent import IngestionAgents  # noqa: F401
 from cama.agents.analysis_agent import AnalysisAgents  # noqa: F401
 from cama.crew import CamaCrew
 
 st.set_page_config(page_title="CAMA Ingestion + Analysis (Agentic)", layout="wide")
-st.title("CAMA Ingestion + Analysis")
-st.caption("Step 1: Configure and ingest logs. Step 2: Click the fixed button to run analysis and view results.")
+
+# Exit and clear cache utilities
+
+def _clear_cache_dir() -> None:
+    cache_root = PROJECT_ROOT / ".cache"
+    if cache_root.exists() and cache_root.is_dir():
+        for child in cache_root.iterdir():
+            try:
+                if child.is_dir():
+                    shutil.rmtree(child, ignore_errors=True)
+                else:
+                    child.unlink(missing_ok=True)
+            except Exception:
+                pass
+
+def _clear_cache_only() -> None:
+    _clear_cache_dir()
+    try:
+        st.toast("Memory cleared")
+    except Exception:
+        pass
+    st.success(".cache cleared.")
 
 # Sidebar configuration
 st.sidebar.header("Configuration")
+# Exit button in sidebar
+st.sidebar.markdown("---")
+if st.sidebar.button("Clear Cache"):
+    _clear_cache_only()
+
 provider = st.sidebar.selectbox("Cloud Provider", ["GCP", "AWS"])
 
 # Timeframe selection (Days vs Custom Range)
@@ -114,12 +140,10 @@ def _run_ingestion_then_analysis(provider: str, days: int, start_dt: datetime, e
 
     # Try to locate the run directory from the result
     run_dir: Optional[str] = None
-    # Newer CrewAI returns a structure with tasks_output
     for attr in ("tasks_output", "output", "raw"):
         if hasattr(result, attr):
             val = getattr(result, attr)
             if isinstance(val, list) and val:
-                # assume first task output has the path
                 first = val[0]
                 for subattr in ("output", "raw"):
                     if hasattr(first, subattr):
@@ -131,13 +155,11 @@ def _run_ingestion_then_analysis(provider: str, days: int, start_dt: datetime, e
                 run_dir = val
                 break
     if not run_dir:
-        # Fallback: parse any path-like string from stringified result
         s = str(result)
         m = re.search(r"(\\.cache|/\.cache)[\\/](run_[^\s'\"]+)", s)
         if m:
             run_dir = str((PROJECT_ROOT / ".cache" / m.group(2)).resolve())
 
-    # Last-resort fallback: pick the freshest run_* directory
     if not run_dir:
         cache_root = PROJECT_ROOT / ".cache"
         candidates = [p for p in cache_root.glob("run_*") if p.is_dir()]
@@ -190,8 +212,9 @@ if start:
     if run_dir:
         st.session_state["run_dir"] = run_dir
         st.success(f"Ingestion complete. Output directory: {run_dir}")
-        # Attempt to switch to the analysis page
         try:
-            st.switch_page("Resources/analysis_app.py")
+            st.switch_page("pages/analysis_app.py")
         except Exception:
-            st.info("Open the Analysis page manually or navigate to Resources/analysis_app.py. The run dir is saved in session state.")
+            st.warning("Navigation issue detected.")
+            if st.button("Continue to Analysis"):
+                st.switch_page("pages/analysis_app.py")

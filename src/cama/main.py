@@ -1,68 +1,57 @@
 #!/usr/bin/env python
+from __future__ import annotations
+
+import argparse
+import os
+import subprocess
 import sys
-import warnings
+from pathlib import Path
+from datetime import datetime, timezone
 
-from datetime import datetime
+from cama.crew import CamaCrew  # noqa: F401
 
-from cama.crew import Cama
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
-warnings.filterwarnings("ignore", category=SyntaxWarning, module="pysbd")
 
-# This main file is intended to be a way for you to run your
-# crew locally, so refrain from adding unnecessary logic into this file.
-# Replace with inputs you want to test with, it will automatically
-# interpolate any tasks and agents information
+def run() -> None:
+    """Entry point for `crewai run`.
 
-def run():
+    Launch the Streamlit root app (src/app.py) which recognizes src/pages/* as pages.
     """
-    Run the crew.
-    """
-    inputs = {
-        'topic': 'AI LLMs',
-        'current_year': str(datetime.now().year)
-    }
-    
-    try:
-        Cama().crew().kickoff(inputs=inputs)
-    except Exception as e:
-        raise Exception(f"An error occurred while running the crew: {e}")
+    app_path = PROJECT_ROOT / "src" / "app.py"
+    if not app_path.exists():
+        raise FileNotFoundError(f"Streamlit app not found at: {app_path}")
+
+    if not os.getenv("GOOGLE_API_KEY"):
+        print("Warning: GOOGLE_API_KEY is not set. You can set it in .env or in the UI.")
+
+    cmd = [sys.executable, "-m", "streamlit", "run", str(app_path)]
+    subprocess.run(cmd, cwd=str(PROJECT_ROOT), check=True)
 
 
-def train():
-    """
-    Train the crew for a given number of iterations.
-    """
-    inputs = {
-        "topic": "AI LLMs",
-        'current_year': str(datetime.now().year)
-    }
-    try:
-        Cama().crew().train(n_iterations=int(sys.argv[1]), filename=sys.argv[2], inputs=inputs)
+def run_cli() -> int:
+    parser = argparse.ArgumentParser(description="Run the CAMA two-agent pipeline (ingestion -> analysis)")
+    parser.add_argument("--provider", choices=["GCP", "AWS"], required=True, help="Cloud provider")
+    parser.add_argument("--days", type=int, default=1, help="Number of days back to fetch logs")
+    parser.add_argument("--start", type=str, default="", help="Optional start time ISO8601")
+    parser.add_argument("--end", type=str, default="", help="Optional end time ISO8601")
+    args = parser.parse_args()
 
-    except Exception as e:
-        raise Exception(f"An error occurred while training the crew: {e}")
+    if not os.getenv("GOOGLE_API_KEY"):
+        print("ERROR: GOOGLE_API_KEY is not set in environment/.env")
+        return 2
 
-def replay():
-    """
-    Replay the crew execution from a specific task.
-    """
-    try:
-        Cama().crew().replay(task_id=sys.argv[1])
+    start_iso = args.start or datetime.now(timezone.utc).isoformat()
+    end_iso = args.end or datetime.now(timezone.utc).isoformat()
 
-    except Exception as e:
-        raise Exception(f"An error occurred while replaying the crew: {e}")
+    from cama.crew import CamaCrew  # local import to avoid issues when only running Streamlit
 
-def test():
-    """
-    Test the crew execution and returns the results.
-    """
-    inputs = {
-        "topic": "AI LLMs",
-        "current_year": str(datetime.now().year)
-    }
-    
-    try:
-        Cama().crew().test(n_iterations=int(sys.argv[1]), eval_llm=sys.argv[2], inputs=inputs)
+    crew = CamaCrew().build(provider=args.provider, days=args.days, start_iso=start_iso, end_iso=end_iso)
+    result = crew.kickoff()
+    print("\nCrew finished. Result:")
+    print(result)
+    return 0
 
-    except Exception as e:
-        raise Exception(f"An error occurred while testing the crew: {e}")
+
+if __name__ == "__main__":
+    raise SystemExit(run_cli())

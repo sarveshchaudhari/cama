@@ -1,54 +1,53 @@
-# Cama Crew
+# CAMA: Agentic Cloud Audit Log Analysis
 
-Welcome to the Cama Crew project, powered by [crewAI](https://crewai.com). This template is designed to help you set up a multi-agent AI system with ease, leveraging the powerful and flexible framework provided by crewAI. Our goal is to enable your agents to collaborate effectively on complex tasks, maximizing their collective intelligence and capabilities.
+This project ingests cloud audit logs (GCP Cloud Audit Logs and AWS CloudTrail), groups them by action, and analyzes them using a two-agent CrewAI pipeline powered by Gemini 1.5 Flash. The UI is built with Streamlit.
 
-## Installation
+Key points
+- Two CrewAI agents (no YAML config):
+  - Ingestion Agent: fetches logs and writes grouped JSON files under .cache/run_*
+  - Analysis Agent: validates the run directory and signals the UI to render summaries and timelines
+- Single entrypoint: src/cama/main.py exposes run() used by `crewai run`
+- Streamlit pages live under src/pages (ingestion_app.py, analysis_app.py)
+- LLM: Google Gemini 1.5 Flash via langchain-google-genai
+- Output: .cache/run_YYYYMMDD_HHMMSS/*.json (one file per action)
 
-Ensure you have Python >=3.10 <3.14 installed on your system. This project uses [UV](https://docs.astral.sh/uv/) for dependency management and package handling, offering a seamless setup and execution experience.
+Requirements
+- Python 3.10–3.13
+- Packages: streamlit, pandas, altair, python-dotenv, crewai, langchain-google-genai, google-cloud-logging, google-auth, boto3
+- Network access to cloud APIs
 
-First, if you haven't already, install uv:
+Setup
+1) Create a .env file in the project root:
+   - GOOGLE_API_KEY=your_gemini_api_key
+   - GOOGLE_GENAI_MODEL=gemini-1.5-flash
+   Optionally (UI can also prompt at runtime):
+   - GOOGLE_APPLICATION_CREDENTIALS_JSON=<full service account JSON string>
+   - AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_DEFAULT_REGION
 
-```bash
-pip install uv
-```
+2) Install dependencies (examples):
+   - pip install -U streamlit pandas altair python-dotenv crewai langchain-google-genai google-cloud-logging google-auth boto3
 
-Next, navigate to your project directory and install the dependencies:
+Run the application (CrewAI)
+- crewai run
+  - This calls cama.main:run(), which launches Streamlit on src/pages/ingestion_app.py
+  - Configure provider and credentials, then click the fixed bottom button “Start Analysis”
+  - The two-agent pipeline runs (ingestion -> analysis) and navigates to the analysis page
 
-(Optional) Lock the dependencies and install them by using the CLI command:
-```bash
-crewai install
-```
-### Customizing
+Alternative ways to run
+- Streamlit directly:
+  - streamlit run src/pages/ingestion_app.py
+- CLI (no UI):
+  - python -m cama.main --provider GCP --days 1
+  - python -m cama.main --provider AWS --days 1
 
-**Add your `OPENAI_API_KEY` into the `.env` file**
+Notes
+- Output files are grouped by action: methodName for GCP, eventName for AWS
+- The .cache directory is recreated per run; previous contents are purged by the handlers
+- No agents.yaml or tasks.yaml are used for the running pipeline; agent and task definitions are in code (see src/cama/agents and src/cama/crew.py)
+- LLM defaults to gemini-1.5-flash; override via GOOGLE_GENAI_MODEL if desired
+- Legacy copies under Resources/ remain but are unused; active pages are under src/pages/
 
-- Modify `src/cama/config/agents.yaml` to define your agents
-- Modify `src/cama/config/tasks.yaml` to define your tasks
-- Modify `src/cama/crew.py` to add your own logic, tools and specific args
-- Modify `src/cama/main.py` to add custom inputs for your agents and tasks
-
-## Running the Project
-
-To kickstart your crew of AI agents and begin task execution, run this from the root folder of your project:
-
-```bash
-$ crewai run
-```
-
-This command initializes the cama Crew, assembling the agents and assigning them tasks as defined in your configuration.
-
-This example, unmodified, will run the create a `report.md` file with the output of a research on LLMs in the root folder.
-
-## Understanding Your Crew
-
-The cama Crew is composed of multiple AI agents, each with unique roles, goals, and tools. These agents collaborate on a series of tasks, defined in `config/tasks.yaml`, leveraging their collective skills to achieve complex objectives. The `config/agents.yaml` file outlines the capabilities and configurations of each agent in your crew.
-
-## Support
-
-For support, questions, or feedback regarding the Cama Crew or crewAI.
-- Visit our [documentation](https://docs.crewai.com)
-- Reach out to us through our [GitHub repository](https://github.com/joaomdmoura/crewai)
-- [Join our Discord](https://discord.com/invite/X4JWnZnxPb)
-- [Chat with our docs](https://chatg.pt/DWjSBZn)
-
-Let's create wonders together with the power and simplicity of crewAI.
+Troubleshooting
+- If navigation between pages fails, open the analysis page manually: streamlit run src/pages/analysis_app.py
+- GCP: ensure valid Service Account JSON (with project_id) and Logs API permissions
+- AWS: ensure CloudTrail is enabled and the IAM identity has lookup_events permissions

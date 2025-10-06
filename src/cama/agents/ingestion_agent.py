@@ -10,7 +10,11 @@ class IngestionAgents:
     """Factory for ingestion-related CrewAI agents."""
 
     def __init__(self, model: str | None = None, api_key: str | None = None, temperature: float = 0.2):
-        self.model = model or os.getenv("GOOGLE_GENAI_MODEL", "gemini-1.5-pro")
+        # Use Gemini 1.5 Flash by default
+        raw_model = model or os.getenv("GOOGLE_GENAI_MODEL", "gemini-1.5-flash")
+        # Normalize: allow values like "models/gemini-1.5-pro" -> "gemini/gemini-1.5-pro"
+        raw_model = raw_model.replace("models/", "")
+        self.model = f"gemini/{raw_model}" if "/" not in raw_model else raw_model
         self.api_key = api_key or os.getenv("GOOGLE_API_KEY")
         self.temperature = temperature
 
@@ -21,16 +25,18 @@ class IngestionAgents:
         absolute path to the cache subdirectory created for the current run.
         """
         try:
-            from langchain_google_genai import ChatGoogleGenerativeAI
-            from crewai import Agent
+            from crewai import Agent, LLM
         except Exception as exc:
             raise RuntimeError(
-                "Required packages 'langchain-google-genai' and 'crewai' must be installed to create the agent"
+                "Required package 'crewai' must be installed to create the agent"
             ) from exc
 
-        llm = ChatGoogleGenerativeAI(
-            model=self.model,
-            google_api_key=self.api_key,
+        if not self.api_key:
+            raise RuntimeError("GOOGLE_API_KEY is required for Gemini LLM")
+
+        llm = LLM(
+            model=self.model,  # e.g., "gemini/gemini-1.5-flash"
+            api_key=self.api_key,
             temperature=self.temperature,
         )
 
