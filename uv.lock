@@ -377,6 +377,8 @@ dependencies = [
     { name = "boto3" },
     { name = "botocore" },
     { name = "crewai", extra = ["tools"] },
+    { name = "cvss" },
+    { name = "cvsslib" },
     { name = "google-auth" },
     { name = "google-cloud-logging" },
     { name = "langchain-google-genai" },
@@ -390,6 +392,8 @@ requires-dist = [
     { name = "boto3", specifier = ">=1.40.44" },
     { name = "botocore", specifier = ">=1.40.44" },
     { name = "crewai", extras = ["tools"], specifier = ">=0.201.1,<1.0.0" },
+    { name = "cvss", specifier = ">=2.5.0" },
+    { name = "cvsslib", specifier = ">=0.3.0" },
     { name = "google-auth", specifier = ">=2.41.1" },
     { name = "google-cloud-logging", specifier = ">=3.12.1" },
     { name = "langchain-google-genai", specifier = ">=2.1.12" },
@@ -708,6 +712,24 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/19/9a/fb8548f762b4749aebd13b57b8f865de80258083fe814957f9b0619cfc56/cryptography-46.0.2-pp311-pypy311_pp73-manylinux_2_34_aarch64.whl", hash = "sha256:9bd26f2f75a925fdf5e0a446c0de2714f17819bf560b44b7480e4dd632ad6c46", size = 4243120, upload-time = "2025-10-01T00:29:02.515Z" },
     { url = "https://files.pythonhosted.org/packages/71/60/883f24147fd4a0c5cab74ac7e36a1ff3094a54ba5c3a6253d2ff4b19255b/cryptography-46.0.2-pp311-pypy311_pp73-manylinux_2_34_x86_64.whl", hash = "sha256:7282d8f092b5be7172d6472f29b0631f39f18512a3642aefe52c3c0e0ccfad5a", size = 4408940, upload-time = "2025-10-01T00:29:04.42Z" },
     { url = "https://files.pythonhosted.org/packages/d9/b5/c5e179772ec38adb1c072b3aa13937d2860509ba32b2462bf1dda153833b/cryptography-46.0.2-pp311-pypy311_pp73-win_amd64.whl", hash = "sha256:c4b93af7920cdf80f71650769464ccf1fb49a4b56ae0024173c24c48eb6b1612", size = 3438518, upload-time = "2025-10-01T00:29:06.139Z" },
+]
+
+[[package]]
+name = "cvss"
+version = "3.6"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/a5/f6/1f7d315de23f39bbc32b94bb6b33a1b6124856037bfaa3f8bdb1a49584fa/cvss-3.6.tar.gz", hash = "sha256:f21d18224efcd3c01b44ff1b37dec2e3208d29a6d0ce6c87a599c73c21ee1a99", size = 30047, upload-time = "2025-08-04T10:50:13.753Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/63/6d/fe2c65b94a28ae0481dc254e8cd664b82390069003bea945076d8a445f2b/cvss-3.6-py2.py3-none-any.whl", hash = "sha256:e342c6ad9c7eb69d2aebbbc2768a03cabd57eb947c806e145de5b936219833ea", size = 31154, upload-time = "2025-08-04T10:50:12.328Z" },
+]
+
+[[package]]
+name = "cvsslib"
+version = "1.0.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/c1/8a/1f26cf24ad993dd01c4ce42f3e15d1ed09e5263fdacdaa5776f3e6c43adb/cvsslib-1.0.0.tar.gz", hash = "sha256:435d201db37aa59dbd321619a63eae61051b1735a1a19bde66b8460ec5b9adad", size = 15640, upload-time = "2020-03-07T13:23:06.768Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/a5/c7/1b45ca70b2f32ec3f3802dc50e6145426cd9f67600646963e801b83c4ab0/cvsslib-1.0.0-py3-none-any.whl", hash = "sha256:1a81a1735084927df2850140c552b4c08c0eecb2b909234d7e68eb7a431ebff4", size = 19578, upload-time = "2020-03-07T13:23:05.088Z" },
 ]
 
 [[package]]

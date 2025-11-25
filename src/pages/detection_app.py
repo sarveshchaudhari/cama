@@ -1,13 +1,14 @@
 from __future__ import annotations
 
 import json
-import os
 import sys
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
-from datetime import datetime, timezone
-from io import StringIO
+from datetime import datetime, timezone, date
 import csv
+import re
+import importlib.util
+import importlib
 
 import streamlit as st
 from dotenv import load_dotenv
@@ -23,11 +24,10 @@ if str(SRC_DIR) not in sys.path:
 load_dotenv(dotenv_path=PROJECT_ROOT / ".env", override=False)
 
 st.set_page_config(page_title="CAMA Detection", layout="wide")
-
 st.title("CAMA Detection")
 st.caption("Detect threats, vulnerabilities, and compliance gaps from ingested audit logs.")
 
-# Helpers
+# ------------------ Helpers ------------------
 
 def _find_latest_run_dir() -> Optional[Path]:
     cache_root = PROJECT_ROOT / ".cache"
@@ -66,8 +66,7 @@ def _summarize_for_agent(pairs: List[Tuple[str, List[Dict[str, Any]]]]) -> Tuple
         a = fname.replace("gcp_", "").replace("aws_", "").replace(".json", "")
         actions.append(a)
         count = len(entries)
-        # sample a few entries to extract hints
-        for e in entries[:50]:
+        for e in entries[:50]:  # sample a few
             try:
                 if isinstance(e, dict):
                     pp = e.get("protoPayload", {})
@@ -106,61 +105,88 @@ def _extract_section(text: str, start_tag: str, end_tag: str) -> str:
     return text[s + len(start_tag) : e].strip()
 
 
-def _to_df(csv_text: str) -> pd.DataFrame:
+def _to_df(csv_text: str, expected_cols: Optional[List[str]] = None) -> pd.DataFrame:
     if not csv_text or not csv_text.strip():
-        return pd.DataFrame()
+        return pd.DataFrame(columns=expected_cols or [])
 
-    expected_cols = [
-        "id",
-        "title",
-        "severity",
-        "cvss_v3_base_score",
-        "provider",
-        "services",
-        "actions",
-        "resources",
-        "users",
-        "time_window",
-        "evidence",
-        "compliance_controls",
-        "remediation",
-    ]
-
-    # Normalize lines: replace tabs with commas, ensure balanced quotes, drop empties
     lines = [ln for ln in csv_text.splitlines() if ln.strip()]
     if not lines:
-        return pd.DataFrame(columns=expected_cols)
+        return pd.DataFrame(columns=expected_cols or [])
 
     # Drop header if present
-    first_lower = lines[0].lower().replace(" ", "")
-    if first_lower.startswith(",".join(expected_cols)) or first_lower.startswith("id,title"):
-        lines = lines[1:]
+    header = lines[0]
+    if expected_cols:
+        first_lower = header.lower().replace(" ", "")
+        if first_lower.startswith(",".join(expected_cols).lower().replace(" ", "")) or first_lower.startswith("id,title"):
+            lines = lines[1:]
 
     rows: List[List[str]] = []
     for raw in lines:
         line = raw.replace("\t", ",").strip()
-        # Fix common quoting issues
         if line.count('"') % 2 != 0:
             line = line + '"'
         try:
             parsed = next(csv.reader([line], delimiter=",", quotechar='"', skipinitialspace=True))
         except Exception:
-            # Last resort: split on comma without respecting quotes
             parsed = [p.strip().strip('"') for p in line.split(",")]
-        # Pad or trim to expected length
-        if len(parsed) < len(expected_cols):
-            parsed += [""] * (len(expected_cols) - len(parsed))
-        elif len(parsed) > len(expected_cols):
-            # Merge overflow columns into the last column (typically remediation)
-            head, tail = parsed[: len(expected_cols) - 1], parsed[len(expected_cols) - 1 :]
-            parsed = head + [", ".join(tail)]
+        if expected_cols:
+            if len(parsed) < len(expected_cols):
+                parsed += [""] * (len(expected_cols) - len(parsed))
+            elif len(parsed) > len(expected_cols):
+                head, tail = parsed[: len(expected_cols) - 1], parsed[len(expected_cols) - 1 :]
+                parsed = head + [", ".join(tail)]
         rows.append(parsed)
 
-    df = pd.DataFrame(rows, columns=expected_cols)
+    df = pd.DataFrame(rows, columns=expected_cols if expected_cols else None)
+    for c in df.columns:
+        try:
+            df[c] = df[c].astype(str).str.strip()
+        except Exception:
+            pass
     return df
 
 
-# Determine run directory
+def _has_module(name: str) -> bool:
+    try:
+        return importlib.util.find_spec(name) is not None
+    except Exception:
+        return False
+
+
+def _compute_cvss_base(vector: str) -> Optional[float]:
+    if not vector or not isinstance(vector, str):
+        return None
+    v = vector.strip()
+    if not v.startswith("CVSS:3.") and re.match(r"^[A-Z]{2}:[A-Z]", v):
+        v = "CVSS:3.1/" + v
+    # Try cvss
+    try:
+        if _has_module("cvss"):
+            mod = importlib.import_module("cvss")
+            CVSS3 = getattr(mod, "CVSS3", None)
+            if CVSS3 is not None:
+                obj = CVSS3(v)
+                if hasattr(obj, "base_score"):
+                    return float(obj.base_score)  # type: ignore
+                scores = getattr(obj, "scores", None)
+                if callable(scores):
+                    return float(obj.scores()[0])
+    except Exception:
+        pass
+    # Try cvsslib
+    try:
+        if _has_module("cvsslib"):
+            mod2 = importlib.import_module("cvsslib")
+            calc = getattr(mod2, "calculate_cvss_from_vector", None)
+            if callable(calc):
+                score = calc(v)[0]
+                return float(score)
+    except Exception:
+        pass
+    return None
+
+# ------------------ Load data ------------------
+
 selected_path: Optional[Path] = None
 if "run_dir" in st.session_state and st.session_state.get("run_dir"):
     p = Path(str(st.session_state["run_dir"]))
@@ -182,7 +208,7 @@ if not pairs:
     st.warning("No JSON files found in run directory.")
     st.stop()
 
-# Agent setup
+# ------------------ Agent ------------------
 from cama.agents.detection_agent import DetectionAgents
 try:
     detection_agent = DetectionAgents().threat_detection_agent()
@@ -190,34 +216,62 @@ except Exception as e:
     st.error(f"Failed to initialize detection agent: {e}")
     st.stop()
 
-# Build instructions (LLM-only, no web search)
 summary_text, ctx = _summarize_for_agent(pairs)
 provider = ctx.get("provider", "Unknown")
 
-instructions = f"""
-You are a senior cloud security analyst. Based only on the following audit log summary and your internal knowledge, perform a deep detection, vulnerability analysis, and compliance check. Be provider-agnostic (GCP/AWS), but tailor compliance notes to the detected provider.
+# System-like instructions enforcing strict schemas and no CVSS scores
+SYSTEM_PROMPT = """
+You are a senior cloud security analyst. Return ONLY the tagged sections. No text outside tags.
 
-STRICT OUTPUT FORMAT WITH TAGS (no extra prose outside tags):
-<<<FINDINGS_CSV>>>
-CSV with columns: id,title,severity,cvss_v3_base_score,provider,services,actions,resources,users,time_window,evidence,compliance_controls,remediation
-- services/actions/resources/users: pipe-separated if multiple (e.g., s1|s2)
-- compliance_controls: semicolon-separated tuples standard:control_id (e.g., CIS:1.1;NIST 800-53:AU-6)
-- remediation: pipe-separated action steps
-<<<END_FINDINGS_CSV>>>
+1) Three CSVs with EXACT schemas:
+<<<THREATS_CSV_SCHEMA>>>
+Columns: id,title,severity,cvss_v31_vector,provider,services,actions,resources,users,time_window,evidence,kill_chain_phase,compliance_controls,remediation
+- id: deterministic (e.g., T-001)
+- severity: Critical|High|Medium|Low
+- cvss_v31_vector: full CVSS:3.1 vector (no scores)
+- services/actions/resources/users: pipe-separated
+- compliance_controls: semicolon-separated framework:control_id
+- remediation: pipe-separated steps
+<<<END_THREATS_CSV_SCHEMA>>>
 
-<<<DAILY_CSV>>>
-CSV summarizing normal day-to-day activities for the time window with columns: time_bucket,action,service,count,top_users
-- time_bucket in ISO date or ISO date hour
-- top_users: pipe-separated usernames
+<<<VULNS_CSV_SCHEMA>>>
+Columns: id,cve_id,title,severity,cvss_v31_vector,provider,services,resources,users,time_window,evidence,affected_versions,remediation
+- cve_id: CVE id or N/A
+<<<END_VULNS_CSV_SCHEMA>>>
+
+<<<COMPLIANCE_CSV_SCHEMA>>>
+Columns: id,framework,control_id,title,severity,provider,services,resources,evidence,gap_description,remediation
+<<<END_COMPLIANCE_CSV>>>
+
+2) One daily CSV with EXACT schema:
+<<<DAILY_CSV_SCHEMA>>>
+Columns: time_bucket,action,service,count,top_users
 <<<END_DAILY_CSV>>>
 
+3) Two narrative reports in natural language:
 <<<THREAT_REPORT>>>
-A detailed natural-language threat report (well-structured with headings and bullet lists). Include: overview, notable threats, vulnerabilities, suspected misconfigurations, impact, and remediation recommendations.
+A detailed narrative covering threats, vulnerabilities, misconfigurations, impact, and remediation.
 <<<END_THREAT_REPORT>>>
-
 <<<DAILY_REPORT>>>
-A clear daily activity report in natural language for stakeholders, summarizing key actions and routine tasks.
+A clear daily activity narrative for stakeholders.
 <<<END_DAILY_REPORT>>>
+
+Rules:
+- Do NOT output CVSS scores, only vectors. The application will compute scores.
+- Tailor wording to inferred provider (AWS/GCP).
+- If no concrete vulnerabilities are found, DO NOT return V-000. Instead, output at least three hardening recommendation rows in VULNERABILITIES_CSV (ids like V-REC-001..003), with cve_id=N/A and practical remediation/suggestions to improve security and robustness.
+- Each CSV must contain at least one data row.
+- Respond in this exact order and nothing else:
+  <<<THREATS_CSV>>> ... <<<END_THREATS_CSV>>>
+  <<<VULNERABILITIES_CSV>>> ... <<<END_VULNERABILITIES_CSV>>>
+  <<<COMPLIANCE_CSV>>> ... <<<END_COMPLIANCE_CSV>>>
+  <<<DAILY_CSV>>> ... <<<END_DAILY_CSV>>>
+  <<<THREAT_REPORT>>> ... <<<END_THREAT_REPORT>>>
+  <<<DAILY_REPORT>>> ... <<<END_DAILY_REPORT>>>
+"""
+
+instructions = f"""
+{SYSTEM_PROMPT}
 
 Context:
 {summary_text}
@@ -228,13 +282,12 @@ from crewai import Crew, Task, Process
 detect_task = Task(
     description=instructions,
     expected_output=(
-        "All four tagged sections present and well-formed: FINDINGS_CSV, DAILY_CSV, THREAT_REPORT, DAILY_REPORT"
+        "All four tagged sections present and well-formed: THREATS_CSV, VULNERABILITIES_CSV, COMPLIANCE_CSV, DAILY_CSV"
     ),
     agent=detection_agent,
 )
 crew = Crew(agents=[detection_agent], tasks=[detect_task], process=Process.sequential, verbose=True)
 
-# Run with progress
 progress = st.progress(0, text="Preparing detection...")
 progress.progress(20, text="Building detection prompts...")
 
@@ -253,36 +306,151 @@ except Exception as e:
     st.error(f"Detection failed: {e}")
     st.stop()
 
-# Extract sections
-findings_csv = _extract_section(result_str, "<<<FINDINGS_CSV>>>", "<<<END_FINDINGS_CSV>>>")
-daily_csv = _extract_section(result_str, "<<<DAILY_CSV>>>", "<<<END_DAILY_CSV>>>")
-threat_md = _extract_section(result_str, "<<<THREAT_REPORT>>>", "<<<END_THREAT_REPORT>>>")
-daily_md = _extract_section(result_str, "<<<DAILY_REPORT>>>", "<<<END_DAILY_REPORT>>>")
+# ------------------ Parse sections ------------------
+
+def _section(name: str) -> str:
+    return _extract_section(result_str, f"<<<{name}>>>", f"<<<END_{name}>>>")
+
+threats_csv = _section("THREATS_CSV")
+vulns_csv = _section("VULNERABILITIES_CSV")
+compliance_csv = _section("COMPLIANCE_CSV")
+daily_csv = _section("DAILY_CSV")
+# Parse narrative sections
+threat_md = _section("THREAT_REPORT")
+daily_md = _section("DAILY_REPORT")
+
+THREATS_COLS = [
+    "id","title","severity","cvss_v31_vector","provider","services","actions","resources","users","time_window","evidence","kill_chain_phase","compliance_controls","remediation",
+]
+VULNS_COLS = [
+    "id","cve_id","title","severity","cvss_v31_vector","provider","services","resources","users","time_window","evidence","affected_versions","remediation",
+]
+COMPLIANCE_COLS = [
+    "id","framework","control_id","title","severity","provider","services","resources","evidence","gap_description","remediation",
+]
+DAILY_COLS = ["time_bucket","action","service","count","top_users"]
 
 # Parse tables
-findings_df = _to_df(findings_csv)
-daily_df = _to_df(daily_csv)
+threats_df = _to_df(threats_csv, THREATS_COLS)
+vulns_df = _to_df(vulns_csv, VULNS_COLS)
+compliance_df = _to_df(compliance_csv, COMPLIANCE_COLS)
+daily_df = _to_df(daily_csv, DAILY_COLS)
 
-if findings_df.empty:
-    st.warning("No findings parsed from the model output.")
+# Compute accurate CVSS base scores from vectors
+for df in (threats_df, vulns_df):
+    if not df.empty and "cvss_v31_vector" in df.columns:
+        df["cvss_v31_base_score"] = [
+            _compute_cvss_base(v) for v in df["cvss_v31_vector"].astype(str).tolist()
+        ]
+
+# Provider-aware default vulnerability recommendations if none detected
+def _default_vuln_recommendations(provider: str) -> pd.DataFrame:
+    prov = (provider or "").upper()
+    svc_iam = "iam.googleapis.com" if prov == "GCP" else "iam.amazonaws.com"
+    svc_storage = "storage.googleapis.com" if prov == "GCP" else "s3.amazonaws.com"
+    svc_logging = "logging.googleapis.com" if prov == "GCP" else "cloudtrail.amazonaws.com"
+    rows = [
+        [
+            "V-REC-001",
+            "N/A",
+            "Enforce MFA for privileged accounts",
+            "High",
+            "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:L/I:L/A:N",
+            provider,
+            svc_iam,
+            "N/A",
+            "N/A",
+            "N/A",
+            "Control gap: privileged identities without enforced MFA",
+            "N/A",
+            "Enable MFA for owners|Require strong factors|Monitor MFA enrollment",
+        ],
+        [
+            "V-REC-002",
+            "N/A",
+            "Reduce overly broad IAM permissions",
+            "High",
+            "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:N",
+            provider,
+            svc_iam,
+            "N/A",
+            "N/A",
+            "N/A",
+            "Control gap: wildcard actions or project-wide roles in use",
+            "N/A",
+            "Adopt least privilege|Refactor custom roles|Review access regularly",
+        ],
+        [
+            "V-REC-003",
+            "N/A",
+            "Harden storage and logging retention",
+            "Medium",
+            "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:L/I:N/A:N",
+            provider,
+            f"{svc_storage}|{svc_logging}",
+            "N/A",
+            "N/A",
+            "N/A",
+            "Control gap: missing versioning/retention and audit log protections",
+            "N/A",
+            "Enable bucket versioning|Configure retention locks|Restrict public access|Enforce log immutability",
+        ],
+    ]
+    df = pd.DataFrame(rows, columns=VULNS_COLS)
+    df["cvss_v31_base_score"] = [
+        _compute_cvss_base(v) for v in df["cvss_v31_vector"].astype(str).tolist()
+    ]
+    return df
+
+# Drop placeholder vulnerability row if present (e.g., V-000)
+if not vulns_df.empty and "id" in vulns_df.columns:
+    vulns_df = vulns_df[vulns_df["id"].str.upper() != "V-000"]
+
+# If still empty, add default recommendations
+if vulns_df.empty:
+    vulns_df = _default_vuln_recommendations(provider)
+
+# Inform user if CVSS computation libraries are missing
+if (not threats_df.empty or not vulns_df.empty) and not (_has_module("cvss") or _has_module("cvsslib")):
+    st.warning("CVSS libraries not installed. Add 'cvss' or 'cvsslib' to dependencies to compute base scores.")
+
+if threats_df.empty and vulns_df.empty and compliance_df.empty:
+    st.warning("No structured detections parsed from the model output.")
 if daily_df.empty:
-    st.info("No daily summary table parsed; continuing with narrative reports.")
+    st.info("No daily summary table parsed.")
 
 progress.progress(80, text="Rendering results...")
 
-# Display structured results using tables
-st.subheader("Findings")
-if not findings_df.empty:
-    st.dataframe(findings_df, width="stretch")
+# ------------------ Tables ------------------
+
+st.subheader("Threat Detections")
+if not threats_df.empty:
+    st.dataframe(threats_df, width='stretch')
 else:
-    st.write("<no structured findings>")
+    st.info("No structured threat detections.")
+
+st.markdown("---")
+st.subheader("Vulnerabilities")
+if not vulns_df.empty:
+    st.dataframe(vulns_df, width='stretch')
+else:
+    st.info("No structured vulnerabilities.")
+
+st.markdown("---")
+st.subheader("Compliance Gaps")
+if not compliance_df.empty:
+    st.dataframe(compliance_df, width='stretch')
+else:
+    st.info("No structured compliance gaps.")
 
 st.markdown("---")
 st.subheader("Daily Activity Summary")
 if not daily_df.empty:
-    st.dataframe(daily_df, width="stretch")
+    st.dataframe(daily_df, width='stretch')
 else:
-    st.write("<no structured daily activity>")
+    st.info("No structured daily activity.")
+
+# ------------------ Narrative Previews ------------------
 
 st.markdown("---")
 st.subheader("Threat Report (Preview)")
@@ -292,7 +460,36 @@ st.markdown("---")
 st.subheader("Daily Report (Preview)")
 st.write(daily_md or "<no daily report>")
 
-# Build Markdown reports instead of PDFs
+# ------------------ Vertical Timeline ------------------
+
+st.markdown("---")
+st.subheader("Activity Timeline")
+
+# Simple, readable tables without timeframe selection
+if not daily_df.empty:
+    # Aggregate by service and action
+    tmp = daily_df.copy()
+    tmp["count_num"] = pd.to_numeric(tmp["count"], errors="coerce").fillna(0)
+    agg = (
+        tmp.groupby(["service", "action"], dropna=False)
+        .agg(
+            total_count=("count_num", "sum"),
+            users=("top_users", lambda s: "|".join(sorted(set(u.strip() for v in s.astype(str) for u in v.split("|") if u.strip())))),
+        )
+        .reset_index()
+        .sort_values(["service", "action"])
+    )
+
+    st.caption("Activity summary by service and action (entire dataset)")
+    st.dataframe(agg, width='stretch')
+
+    st.caption("Raw activity timeline (as provided)")
+    # Keep the original DAILY_CSV rows for transparency
+    st.dataframe(daily_df.sort_values(by=["service", "action"]).reset_index(drop=True), width='stretch')
+else:
+    st.info("No daily activity available.")
+
+# ------------------ Markdown Reports ------------------
 
 def _df_to_markdown_table(df: pd.DataFrame) -> str:
     if df.empty:
@@ -315,13 +512,18 @@ meta_block = (
 threat_report_md = (
     "# CAMA Threat, Vulnerability, and Compliance Report\n\n"
     + meta_block
-    + "## Findings\n\n"
-    + _df_to_markdown_table(findings_df)
+    + "## Threat Detections\n\n"
+    + _df_to_markdown_table(threats_df)
+    + "\n## Vulnerabilities\n\n"
+    + _df_to_markdown_table(vulns_df)
+    + "\n## Compliance Gaps\n\n"
+    + _df_to_markdown_table(compliance_df)
     + "\n## Narrative\n\n"
     + (threat_md or "_No threat narrative provided._")
     + "\n"
 )
 
+# Daily report now includes narrative
 daily_report_md = (
     "# CAMA Daily Activity Report\n\n"
     + meta_block
@@ -334,7 +536,7 @@ daily_report_md = (
 
 progress.progress(100, text="Detection completed.")
 
-# Save and download buttons for Markdown
+# Save & download
 threat_path = selected_path / "threat_report.md"
 daily_path = selected_path / "daily_report.md"
 try:
@@ -345,7 +547,7 @@ except Exception:
 
 st.markdown("---")
 st.subheader("Downloads")
-st.download_button("Download Threat Report (MD)", data=threat_report_md, file_name="threat_report.md", mime="text/markdown")
+st.download_button("Download Threat/Compliance Report (MD)", data=threat_report_md, file_name="threat_report.md", mime="text/markdown")
 st.download_button("Download Daily Report (MD)", data=daily_report_md, file_name="daily_report.md", mime="text/markdown")
 
 # Optional navigation
