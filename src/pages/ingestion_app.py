@@ -205,7 +205,7 @@ with col1:
     st.markdown("### Notes")
     st.markdown("- The output is written under the project-root `.cache/` folder in a unique `run_*` subdirectory.")
     st.markdown("- Files are grouped by activity (`methodName` for GCP, `eventName` for AWS). One JSON per activity.")
-    st.markdown("- This app uses a CrewAI pipeline with 2 agents: Ingestion then Analysis (Gemini 1.5 Flash).")
+    st.markdown("- This app uses a CrewAI pipeline with 2 agents: Ingestion then Analysis (Gemini 2.5 Flash Lite).")
 
 with col2:
     if "run_dir" in st.session_state and st.session_state.get("run_dir"):
